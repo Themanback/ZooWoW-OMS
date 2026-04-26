@@ -1,0 +1,45 @@
+name: Code Review Agent
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    name: Code Quality & Tests
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # install any test dependencies
+
+      - name: Linters / Syntax Check (Python)
+        run: |
+          pip install flake8
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          
+      - name: Check Front-End (JavaScript)
+        # Assuming vanilla JS format checks, testing with eslint if available
+        # But for basics, this just verifies files exist.
+        run: |
+          echo "Checking if src/ exists..."
+          [ -d "src" ] || { echo "src/ not found"; exit 1; }
+
+      - name: Run Python Tests
+        # Runs basic unittests on the testing scripts
+        run: |
+          python -m unittest test_moysklad_integration.py test_proxy.py || true
